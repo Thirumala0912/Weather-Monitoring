@@ -1,8 +1,10 @@
 const mongoose = require("mongoose");
-// Alert model
+
 const AlertSchema = new mongoose.Schema({
+  userId: String, // 👈 important
   city: String,
   threshold: Number,
   email: String,
 });
+
 module.exports = mongoose.model("Alert", AlertSchema);

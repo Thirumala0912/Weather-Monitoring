@@ -1,31 +1,30 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
+require("dotenv").config({ path: "./backend/.env" });
 
-
-const connectDB = require('./config/database');
-const weatherRoutes = require('./routes/weatherRoutes');
-const setupCronJobs = require('./utils/cronJobs');
+const express = require("express");
+const cors = require("cors");
+const mongoose = require("mongoose");
 
 const app = express();
 
-const corsOptions = {
-  origin: ["http://localhost:5173"],
-   // Replace with your frontend URL
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  allowedHeaders: ["Content-Type", "Authorization"], // Add 'Authorization' here
-  credentials: true,
-};
+// ✅ CONNECT TO ATLAS
+mongoose.connect("mongodb+srv://RajathRKumar:123Twist123@cluster0.0pxwvh1.mongodb.net/weatherApp?retryWrites=true&w=majority")
+  .then(() => console.log("✅ MongoDB Atlas Connected"))
+  .catch((err) => console.log("❌ DB Error:", err));
 
-app.use(cors(corsOptions));
+// ROUTES
+const weatherRoutes = require("./routes/weatherRoutes");
+const authRoutes = require("./routes/authRoutes");
+const alertRoutes = require("./routes/alertRoutes");
+const summaryRoutes = require("./routes/summaryRoutes");
+app.use(cors());
 app.use(express.json());
 
-connectDB();
-setupCronJobs();
+app.use("/api", weatherRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api", alertRoutes);
+app.use("/api", summaryRoutes);
+const PORT = 5000;
 
-app.use('/api', weatherRoutes);
-
-const port = process.env.PORT || 5000;
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
 });

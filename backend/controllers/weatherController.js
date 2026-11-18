@@ -1,54 +1,54 @@
-const weatherService = require("../services/weatherService");
-const DailySummary = require("../models/DailySummary");
-const Alert = require("../models/Alert");
-const { getISTDate } = require("../utils/utils");
+const axios = require("axios");
 
+// ✅ FIXED API KEY
+const API_KEY = process.env.OPENWEATHER_API_KEY;
+
+console.log("API KEY:", API_KEY);
+
+// 🌤️ CITY WEATHER
 exports.getCurrentWeather = async (req, res) => {
   try {
-    const weatherData = await weatherService.fetchWeatherData(req.params.city);
-    res.json(weatherData);
+    const response = await axios.get(
+      "https://api.openweathermap.org/data/2.5/weather",
+      {
+        params: {
+          q: req.params.city,
+          appid: API_KEY, // ✅ FIXED
+          units: "metric",
+        },
+      }
+    );
+
+    res.json(response.data);
   } catch (error) {
-    if (error.response.status === 404) {
-      return res.status(404).json({
-        error: "City not found. Please check the city name and try again.",
-      });
-    }
-    res.status(500).json({ error: "Failed to fetch weather data" });
+    console.error("City error:", error.response?.data || error.message);
+    res.status(500).json({ error: "City fetch failed" });
   }
 };
 
-exports.getDailySummary = async (req, res) => {
-  try {
-    const today = getISTDate();
+// 📍 EXACT LOCATION WEATHER
+exports.getWeatherByCoords = async (req, res) => {
+  const { lat, lon } = req.query;
 
-    const summary = await DailySummary.findOne({
-      city: new RegExp(`^${req.params.city}$`, "i"),
-      date: today,
-    });
-    res.json(summary);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch daily summary" });
-  }
-};
+  console.log("🔥 COORDS API HIT");
+  console.log("📍 Lat:", lat, "Lon:", lon);
 
-exports.getSummaries = async (req, res) => {
   try {
-    const summaries = await DailySummary.find({
-      city: new RegExp(`^${req.params.city}$`, "i"),
-    });
-    res.json(summaries);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch summaries" });
-  }
-};
+    const response = await axios.get(
+      "https://api.openweathermap.org/data/2.5/weather",
+      {
+        params: {
+          lat,
+          lon,
+          appid: API_KEY, // ✅ FIXED
+          units: "metric",
+        },
+      }
+    );
 
-exports.setAlert = async (req, res) => {
-  try {
-    const { city, threshold, email } = req.body;
-    const alert = new Alert({ city, threshold, email });
-    await alert.save();
-    res.status(200).json({ message: "Alert set successfully" });
+    res.json(response.data);
   } catch (error) {
-    res.status(500).json({ message: "Error setting alert" });
+    console.error("Coords error:", error.response?.data || error.message);
+    res.status(500).json({ error: "Coords fetch failed" });
   }
 };
